@@ -36,11 +36,22 @@ class MusicRequest(BaseModel):
     prompt: str
 
 
+@app.get("/")
+def read_root():
+    return {"message": "Welcome to the Music Generation API!"}
+
+
 @app.post("/create-music")
 def generate_music(music_request: MusicRequest):
     try:
-        create_music(music_request.prompt)
-        return JSONResponse(content={"message": "Music generation initiated."}, status_code=200)
+        saved_files = create_music(music_request.prompt)
+        if not saved_files:
+            raise HTTPException(
+                status_code=500, detail="Music generation failed.")
+
+        video_urls = [
+            f"/videos/{os.path.basename(file)}" for file in saved_files]
+        return JSONResponse(content={"message": "Music generation initiated.", "videos": video_urls}, status_code=200)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

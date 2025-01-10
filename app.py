@@ -7,7 +7,7 @@ from groq import Groq
 load_dotenv()
 
 REQUEST_URL = "https://api.acedata.cloud/suno/audios"
-AUTH_TOKEN = "Bearer 93607bddd3ba448aa1eb74fdeaab967c"
+AUTH_TOKEN = os.environ.get("AUTH_TOKEN")
 
 
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
@@ -35,6 +35,9 @@ def create_music(prompt: str):
         data = response.json()
         video_urls = [item['video_url']
                       for item in data.get('data', []) if 'video_url' in item]
+
+        saved_files = []
+
         os.makedirs('videos', exist_ok=True)
         for idx, video_url in enumerate(video_urls):
             video_response = requests.get(video_url)
@@ -43,11 +46,14 @@ def create_music(prompt: str):
                 with open(file_path, 'wb') as f:
                     f.write(video_response.content)
                 print(f"Saved: {file_path}")
+                saved_files.append(file_path)
             else:
                 print(f"Failed to download {video_url}")
+        return saved_files
     else:
         print(f"Error: {response.status_code}")
         print(response.text)
+        return []
 
 
 def genLyrics(r_context: str):
@@ -112,4 +118,4 @@ def genLyrics(r_context: str):
     print(chat_completion.choices[0].message.content)
 
 
-genLyrics("The laws of thermodynamics are fundamental principles that govern the behavior of energy and heat transfer in physical systems. They describe how energy is conserved, how it can be transformed, and the direction in which processes occur naturally, ensuring that energy moves from more useful forms to less useful ones and that systems progress towards equilibrium.")
+# genLyrics("The laws of thermodynamics are fundamental principles that govern the behavior of energy and heat transfer in physical systems. They describe how energy is conserved, how it can be transformed, and the direction in which processes occur naturally, ensuring that energy moves from more useful forms to less useful ones and that systems progress towards equilibrium.")

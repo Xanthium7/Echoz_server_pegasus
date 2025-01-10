@@ -22,4 +22,4 @@ def gen_embd(file_path):
     return doc_count
 
 
-print("DOC COUNT: ", gen_embd("Essay.pdf"))
+# print("DOC COUNT: ", gen_embd("Essay.pdf"))

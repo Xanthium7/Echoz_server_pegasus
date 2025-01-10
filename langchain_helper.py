@@ -18,4 +18,4 @@ def get_relevent_context_from_db(query):
     return context
 
 
-get_relevent_context_from_db("Nutritional value of  potato")
+# get_relevent_context_from_db("Nutritional value of  potato")
