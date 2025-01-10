@@ -40,6 +40,7 @@ chroma_db_nccn
 
 chroma_db_nccn/
 
+*/*.mp4
 *.mp4
 videos/
 videos/video_0.mp4
