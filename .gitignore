@@ -35,3 +35,7 @@ dist/
 
 # Jupyter Notebook
 .ipynb_checkpoints
+
+chroma_db_nccn
+
+chroma_db_nccn/

@@ -20,3 +20,6 @@ def gen_embd(file_path):
 
     doc_count = vectorstore._collection.count()
     return doc_count
+
+
+print("DOC COUNT: ", gen_embd("Essay.pdf"))
