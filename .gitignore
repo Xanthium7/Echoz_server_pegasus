@@ -39,3 +39,6 @@ dist/
 chroma_db_nccn
 
 chroma_db_nccn/
+
+*.mp4
+videos/
