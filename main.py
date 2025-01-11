@@ -43,6 +43,7 @@ def read_root():
 
 @app.post("/create-music")
 def generate_music(music_request: MusicRequest):
+    print("Received request for music generation.")
     try:
         saved_files = create_music(music_request.prompt)
         if not saved_files:
