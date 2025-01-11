@@ -7,7 +7,7 @@ from groq import Groq
 from fastapi.responses import JSONResponse
 from langchain_helper import get_relevent_context_from_db
 from generate_embeddings import gen_embd
-from app import create_music, genLyrics
+from app import create_music, genLyrics, gen_image_prompts
 
 import os
 
@@ -45,14 +45,17 @@ def read_root():
 def generate_music(music_request: MusicRequest):
     print("Received request for music generation.")
     try:
-        saved_files = create_music(music_request.prompt)
-        if not saved_files:
+        result = create_music(music_request.prompt)
+        if not result["videos"]:
             raise HTTPException(
                 status_code=500, detail="Music generation failed.")
 
         video_urls = [
-            f"/videos/{os.path.basename(file)}" for file in saved_files]
-        return JSONResponse(content={"message": "Music generation initiated.", "videos": video_urls}, status_code=200)
+            f"/videos/{os.path.basename(file)}" for file in result["videos"]]
+        lyrics = result["lyrics"]
+        prompts = gen_image_prompts(lyrics)
+
+        return JSONResponse(content={"message": "Music generation initiated.", "videos": video_urls, "img_prompts": prompts}, status_code=200)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

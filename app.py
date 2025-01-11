@@ -11,9 +11,11 @@ AUTH_TOKEN = os.environ.get("AUTH_TOKEN")
 
 
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+lyrics = []
 
 
 def create_music(prompt: str):
+    global lyrics
     payload = {
         "action": "generate",
         "prompt": prompt,
@@ -35,21 +37,34 @@ def create_music(prompt: str):
         data = response.json()
         video_urls = [item['video_url']
                       for item in data.get('data', []) if 'video_url' in item]
+        lyrics = [item['lyric']
+                  for item in data.get('data', []) if 'lyric' in item]
 
         saved_files = []
 
         os.makedirs('videos', exist_ok=True)
         for idx, video_url in enumerate(video_urls):
-            video_response = requests.get(video_url)
-            if video_response.status_code == 200:
-                file_path = os.path.join('videos', f'video_{idx}.mp4')
-                with open(file_path, 'wb') as f:
-                    f.write(video_response.content)
-                print(f"Saved: {file_path}")
-                saved_files.append(file_path)
-            else:
-                print(f"Failed to download {video_url}")
-        return saved_files
+            for attempt in range(1, 6):  # Retry up to 5 times
+                print(f"Attempt {attempt} to download video {idx}")
+                video_response = requests.get(video_url)
+                if video_response.status_code == 200:
+                    file_path = os.path.join('videos', f'video_{idx}.mp4')
+                    with open(file_path, 'wb') as f:
+                        f.write(video_response.content)
+                    print(f"Saved: {file_path}")
+                    saved_files.append(file_path)
+                    break  # Exit the retry loop if successful
+                else:
+                    print(
+                        f"Failed to download {video_url} on attempt {attempt}")
+                    if attempt == 5:
+                        print(
+                            f"Giving up on downloading {video_url} after 5 attempts")
+
+        return {
+            "videos": saved_files,
+            "lyrics": lyrics
+        }
     else:
         print(f"Error: {response.status_code}")
         print(response.text)
@@ -116,6 +131,45 @@ def genLyrics(r_context: str):
     )
 
     print(chat_completion.choices[0].message.content)
+    return chat_completion.choices[0].message.content
 
 
-# genLyrics("The laws of thermodynamics are fundamental principles that govern the behavior of energy and heat transfer in physical systems. They describe how energy is conserved, how it can be transformed, and the direction in which processes occur naturally, ensuring that energy moves from more useful forms to less useful ones and that systems progress towards equilibrium.")
+def gen_image_prompts(lyrics: str):
+    # Generate image prompts based on the lyrics
+    prompt = f'''
+    You are an AI tasked with creating image generation prompts based on song lyrics. Your input will be a set of song lyrics, and your output should be a list of prompts that can be used to generate captivating, satisfying, and attention-grabbing images that visually represent the content and emotions of the lyrics. The goal is to create imagery that is particularly engaging for autistic students, using stunning visuals to draw their attention.
+
+    Instructions:
+    1. Analyze the given song lyrics for key themes, imagery, and emotional undertones.
+    2. Create a descriptive prompt for each verse, chorus, bridge, and outro (if applicable) that captures the essence of the lyrics.
+    3. Ensure that the prompts are detailed enough to guide an image generation model to create visually compelling, satisfying, and accurate representations of the lyrics.
+    4. Focus on creating imagery that is visually stunning and captivating, with elements that are likely to grab and hold the attention of autistic students.
+    5. Format the output as a JSON array, with each element being a string prompt corresponding to a section of the lyrics.
+    IMPORTANT: Return only the OUTPUT Prompts in the output format and do not include any other text.
+    IMPORTANT: PREFIX every image prompt with 'IMAGE_PROMPT'
+    
+
+    SONG LYRICS: {lyrics}
+
+    Remember to balance descriptive detail with emotional resonance. Your prompts should be both informative and evocative, suitable for guiding an image generation model to create stunning and attention-grabbing visuals.
+    '''
+
+    prompts = []
+
+    chat_completion = client.chat.completions.create(
+        messages=[
+            {
+                "role": "user",
+                "content": prompt,
+            }
+        ],
+        model="llama-3.3-70b-versatile",
+    )
+    output = chat_completion.choices[0].message.content
+    # print(output)
+    return output
+
+
+# lyric = genLyrics("Car riding a dog on a sunny day")
+# pormpts = gen_image_prompts(lyric)
+# print(pormpts)
