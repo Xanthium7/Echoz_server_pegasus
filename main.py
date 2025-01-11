@@ -61,28 +61,28 @@ def generate_music(music_request: MusicRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/upload-file")
-async def upload_file(file: UploadFile = File(...)):
-    try:
-        os.makedirs('uploads', exist_ok=True)
+# @app.post("/upload-file")
+# async def upload_file(file: UploadFile = File(...)):
+#     try:
+#         os.makedirs('uploads', exist_ok=True)
 
-        file_location = os.path.join('uploads', file.filename)
+#         file_location = os.path.join('uploads', file.filename)
 
-        with open(file_location, "wb") as f:
-            contents = await file.read()
-            f.write(contents)
-        with open(file_location, "r", encoding="utf-8") as f:
-            r_context = f.read()
+#         with open(file_location, "wb") as f:
+#             contents = await file.read()
+#             f.write(contents)
+#         with open(file_location, "r", encoding="utf-8") as f:
+#             r_context = f.read()
 
-        # Generate lyrics
-        lyrics = genLyrics(r_context)
-        response = create_music_with_pdf(lyrics)
+#         # Generate lyrics
+#         lyrics = genLyrics(r_context)
+#         response = create_music_with_pdf(lyrics)
 
-        # return JSONResponse(content={"lyrics": lyrics}, status_code=200)
-        return JSONResponse(content={"message": "the music generation is completed", "videos": response.videos, "lyrics": response.lyrics}, status_code=200)
+#         # return JSONResponse(content={"lyrics": lyrics}, status_code=200)
+#         return JSONResponse(content={"message": "the music generation is completed", "videos": response.videos, "lyrics": response.lyrics}, status_code=200)
 
-    except Exception as e:
-        return JSONResponse(content={"message": "File upload failed", "error": str(e)}, status_code=500)
+#     except Exception as e:
+#         return JSONResponse(content={"message": "File upload failed", "error": str(e)}, status_code=500)
 
 
 @app.post("/upload-pdf")
@@ -107,9 +107,10 @@ async def upload_pdf(file: UploadFile = File(...)):
         lyrics = genLyrics(relevant_context)
         response = create_music_with_pdf(lyrics)
 
-        return JSONResponse(content={"message": "the music generation is completed", "videos": response.videos, "lyrics": response.lyrics}, status_code=200)
+        return JSONResponse(content={"message": "the music generation is completed", "videos": response["videos"], "lyrics": response["lyrics"]}, status_code=200)
 
     except Exception as e:
+        print(e)
         return JSONResponse(content={"message": "PDF upload failed", "error": str(e)}, status_code=500)
 
 

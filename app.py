@@ -78,11 +78,12 @@ def create_music(prompt: str, genre: str = "pop electronic"):
 
 
 def create_music_with_pdf(lyrics_content: str):
+
     global lyrics
     payload = {
         "action": "generate",
         "prompt": "using the provided lyrics create a engauging song",
-        "model": "chirp-v3-5",
+        "model": "chirp-v4",
         "lyric": lyrics_content,
         "custom": True,
 
@@ -119,6 +120,7 @@ def create_music_with_pdf(lyrics_content: str):
                         f.write(video_response.content)
                     print(f"Saved: {file_path}")
                     saved_files.append(file_path)
+                    print("breaking")
                     break  # Exit the retry loop if successful
                 else:
                     print(
@@ -127,6 +129,7 @@ def create_music_with_pdf(lyrics_content: str):
                         print(
                             f"Giving up on downloading {video_url} after 5 attempts")
 
+        print("Returning the saved files")
         return {
             "videos": saved_files,
             "lyrics": lyrics
