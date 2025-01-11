@@ -16,6 +16,7 @@ venv.bak/
 # Secret environment variables
 .env
 .env.*
+/envl
 
 # IDEs and editors
 .vscode/
