@@ -1,14 +1,19 @@
 import requests
 import os
 import google.generativeai as genai
-from dotenv import load_dotenv
 from groq import Groq
+from dotenv import load_dotenv, find_dotenv
 
-load_dotenv()
+# Find the .env file
+dotenv_path = find_dotenv()
+print(f"Loading environment variables from: {dotenv_path}")
 
+# Load the .env file
+load_dotenv(dotenv_path)
 REQUEST_URL = "https://api.acedata.cloud/suno/audios"
 AUTH_TOKEN = os.environ.get("AUTH_TOKEN")
 
+print("AUTH_TOKEN: ", AUTH_TOKEN)
 
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 lyrics = []
