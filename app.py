@@ -19,7 +19,7 @@ client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 lyrics = []
 
 
-def create_music(prompt: str):
+def create_music(prompt: str, genre: str):
     global lyrics
     payload = {
         "action": "generate",
@@ -27,8 +27,9 @@ def create_music(prompt: str):
         "model": "chirp-v2-xxl-alpha",
         # "lyric": "required lyrics (if any, optional)",
         # "custom": False,
+
         "instrumental": False,
-        "style": "pop, dreamy, ethereal"
+        "style": genre,
         # "style_negative": ""
     }
     headers = {

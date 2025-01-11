@@ -34,6 +34,7 @@ app.mount("/uploads", StaticFiles(directory="uploads"),
 
 class MusicRequest(BaseModel):
     prompt: str
+    genre: str
 
 
 @app.get("/")
@@ -45,7 +46,7 @@ def read_root():
 def generate_music(music_request: MusicRequest):
     print("Received request for music generation.")
     try:
-        result = create_music(music_request.prompt)
+        result = create_music(music_request.prompt, music_request.genre)
         if not result["videos"]:
             raise HTTPException(
                 status_code=500, detail="Music generation failed.")
