@@ -7,9 +7,9 @@ from groq import Groq
 from fastapi.responses import JSONResponse
 from langchain_helper import get_relevent_context_from_db
 from generate_embeddings import gen_embd
-from app import create_music, genLyrics, gen_image_prompts
-
+from app import create_music, genLyrics, gen_image_prompts, create_music_with_pdf
 import os
+import fitz  # PyMuPDF
 
 # Load environment variables
 load_dotenv()
@@ -64,7 +64,6 @@ def generate_music(music_request: MusicRequest):
 @app.post("/upload-file")
 async def upload_file(file: UploadFile = File(...)):
     try:
-
         os.makedirs('uploads', exist_ok=True)
 
         file_location = os.path.join('uploads', file.filename)
@@ -77,11 +76,49 @@ async def upload_file(file: UploadFile = File(...)):
 
         # Generate lyrics
         lyrics = genLyrics(r_context)
+        response = create_music_with_pdf(lyrics)
 
-        return JSONResponse(content={"lyrics": lyrics}, status_code=200)
+        # return JSONResponse(content={"lyrics": lyrics}, status_code=200)
+        return JSONResponse(content={"message": "the music generation is completed", "videos": response.videos, "lyrics": response.lyrics}, status_code=200)
 
     except Exception as e:
         return JSONResponse(content={"message": "File upload failed", "error": str(e)}, status_code=500)
+
+
+@app.post("/upload-pdf")
+async def upload_pdf(file: UploadFile = File(...)):
+    try:
+        os.makedirs('uploads', exist_ok=True)
+
+        file_location = os.path.join('uploads', file.filename)
+
+        with open(file_location, "wb") as f:
+            contents = await file.read()
+            f.write(contents)
+
+        # Extract text from PDF
+        pdf_text = extract_text_from_pdf(file_location)
+
+        # Get relevant context from DB
+        relevant_context = get_relevent_context_from_db(pdf_text)
+
+        print(relevant_context)
+        # create_music_with_pdf
+        lyrics = genLyrics(relevant_context)
+        response = create_music_with_pdf(lyrics)
+
+        return JSONResponse(content={"message": "the music generation is completed", "videos": response.videos, "lyrics": response.lyrics}, status_code=200)
+
+    except Exception as e:
+        return JSONResponse(content={"message": "PDF upload failed", "error": str(e)}, status_code=500)
+
+
+def extract_text_from_pdf(file_path: str) -> str:
+    text = ""
+    with fitz.open(file_path) as doc:
+        for page in doc:
+            text += page.get_text()
+    return text
 
 
 if __name__ == '__main__':

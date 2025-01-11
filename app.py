@@ -19,12 +19,12 @@ client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 lyrics = []
 
 
-def create_music(prompt: str, genre: str):
+def create_music(prompt: str, genre: str = "pop electronic"):
     global lyrics
     payload = {
         "action": "generate",
-        "prompt": prompt,
-        "model": "chirp-v2-xxl-alpha",
+        "prompt": prompt + ". Generate a song based on the genre: " + genre,
+        "model": "chirp-v3-5",
         # "lyric": "required lyrics (if any, optional)",
         # "custom": False,
 
@@ -39,6 +39,66 @@ def create_music(prompt: str, genre: str):
 
     response = requests.post(REQUEST_URL, json=payload, headers=headers)
     print("Generating your tones, please wait for 30 seconds...")
+    if response.status_code == 200:
+        data = response.json()
+        video_urls = [item['video_url']
+                      for item in data.get('data', []) if 'video_url' in item]
+        lyrics = [item['lyric']
+                  for item in data.get('data', []) if 'lyric' in item]
+
+        saved_files = []
+
+        os.makedirs('videos', exist_ok=True)
+        for idx, video_url in enumerate(video_urls):
+            for attempt in range(1, 6):  # Retry up to 5 times
+                print(f"Attempt {attempt} to download video {idx}")
+                video_response = requests.get(video_url)
+                if video_response.status_code == 200:
+                    file_path = os.path.join('videos', f'video_{idx}.mp4')
+                    with open(file_path, 'wb') as f:
+                        f.write(video_response.content)
+                    print(f"Saved: {file_path}")
+                    saved_files.append(file_path)
+                    break  # Exit the retry loop if successful
+                else:
+                    print(
+                        f"Failed to download {video_url} on attempt {attempt}")
+                    if attempt == 5:
+                        print(
+                            f"Giving up on downloading {video_url} after 5 attempts")
+
+        return {
+            "videos": saved_files,
+            "lyrics": lyrics
+        }
+    else:
+        print(f"Error: {response.status_code}")
+        print(response.text)
+        return []
+
+
+def create_music_with_pdf(lyrics_content: str):
+    global lyrics
+    payload = {
+        "action": "generate",
+        "prompt": "using the provided lyrics create a engauging song",
+        "model": "chirp-v3-5",
+        "lyric": lyrics_content,
+        "custom": True,
+
+        "instrumental": False,
+        # "style": genre,
+        # "style_negative": ""
+    }
+    headers = {
+        "authorization": AUTH_TOKEN,
+        "content-type": "application/json"
+    }
+
+    response = requests.post(REQUEST_URL, json=payload, headers=headers)
+    print("Generating your tones with pdf, please wait for 30 seconds...")
+
+    # same as the noramal create_music function
     if response.status_code == 200:
         data = response.json()
         video_urls = [item['video_url']
